@@ -10,7 +10,7 @@ The primary purpose of the nose cone is to reduce aerodynamic drag by streamlini
 * For manufacturing purposes, the nose cone length was adjusted to **9 inches**. When 3D printing, thicker wall sections were used and later sanded to eliminate surface irregularities caused by visible print layer lines, resulting in a smoother aerodynamic surface.
 * The **coefficient of drag (Cd)** was analyzed, recognizing that it is influenced by both velocity and geometry. The nose cone was designed in CAD and imported into **ANSYS** for aerodynamic simulation to evaluate its drag characteristics.
 * Flow **pathline simulations** were generated to visualize airflow behavior around the nose cone and confirm smooth, attached flow.
-* The final geometry was chosen as an **elliptical (ellipsoid) nose cone**, which was calculated to be the most aerodynamically efficient shape for the expected subsonic flight regime.
+* The final geometry was chosen as an **xx nose cone**, which was calculated to be the most aerodynamically efficient shape for the expected subsonic flight regime.
 
 ---
 
