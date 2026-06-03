@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rocket Flight Visualizer</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="canvas"></canvas>
+
+    <div id="drop-overlay" class="hidden">
+      <p>Drop flight log CSV here</p>
+    </div>
+
+    <header id="top-bar">
+      <div class="brand">
+        <span class="logo">▲</span>
+        <h1>Rocket Flight Visualizer</h1>
+      </div>
+      <div class="top-actions">
+        <label class="btn btn-primary">
+          <input type="file" id="file-input" accept=".csv,text/csv" hidden />
+          Load CSV
+        </label>
+        <button type="button" id="btn-sample" class="btn">Load sample log</button>
+        <select id="terrain-mode" class="select" title="Ground appearance">
+          <option value="procedural">Procedural terrain</option>
+          <option value="satellite">Satellite map (OSM)</option>
+          <option value="topo">Topo map (OSM)</option>
+        </select>
+        <select id="camera-mode" class="select" title="Camera">
+          <option value="follow">Follow rocket</option>
+          <option value="chase">Chase cam</option>
+          <option value="orbit">Orbit</option>
+          <option value="overview">Overview</option>
+        </select>
+      </div>
+    </header>
+
+    <aside id="telemetry" class="panel hidden">
+      <h2>Telemetry</h2>
+      <div class="tel-grid">
+        <div class="tel-item"><span class="label">Time</span><span id="tel-time" class="value">—</span></div>
+        <div class="tel-item"><span class="label">Altitude</span><span id="tel-alt" class="value">—</span></div>
+        <div class="tel-item"><span class="label">Speed</span><span id="tel-speed" class="value">—</span></div>
+        <div class="tel-item"><span class="label">Course</span><span id="tel-course" class="value">—</span></div>
+        <div class="tel-item"><span class="label">Roll</span><span id="tel-roll" class="value">—</span></div>
+        <div class="tel-item"><span class="label">Pitch</span><span id="tel-pitch" class="value">—</span></div>
+        <div class="tel-item"><span class="label">Yaw</span><span id="tel-yaw" class="value">—</span></div>
+        <div class="tel-item"><span class="label">GPS</span><span id="tel-gps" class="value">—</span></div>
+        <div class="tel-item wide"><span class="label">Position</span><span id="tel-pos" class="value mono">—</span></div>
+      </div>
+      <div class="stats-block">
+        <h3>Flight stats</h3>
+        <div id="flight-stats" class="stats-list"></div>
+      </div>
+    </aside>
+
+    <div id="welcome" class="welcome">
+      <div class="welcome-card">
+        <h2>Visualize your rocket flight log</h2>
+        <p>Upload a CSV with columns like <code>time_ms, lat, lng, altitude_m, speed_kmh, course_deg, roll_deg, pitch_deg, yaw_deg</code></p>
+        <label class="btn btn-large btn-primary">
+          <input type="file" id="file-input-welcome" accept=".csv,text/csv" hidden />
+          Choose CSV file
+        </label>
+        <button type="button" id="btn-sample-welcome" class="btn btn-large">Or load bundled sample</button>
+        <p class="hint">Drag &amp; drop a CSV anywhere · Space to play/pause</p>
+      </div>
+    </div>
+
+    <footer id="timeline-bar" class="hidden">
+      <div class="transport">
+        <button type="button" id="btn-play" class="icon-btn" title="Play / Pause (Space)" aria-label="Play">
+          <svg id="icon-play" viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-pause" class="hidden" viewBox="0 0 24 24" width="28" height="28"><path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+        </button>
+        <button type="button" id="btn-step-back" class="icon-btn sm" title="Step back">−</button>
+        <button type="button" id="btn-step-fwd" class="icon-btn sm" title="Step forward">+</button>
+        <span id="time-current" class="time-label">0:00</span>
+        <span class="time-sep">/</span>
+        <span id="time-total" class="time-label dim">0:00</span>
+        <select id="playback-speed" class="select speed-select">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="5">5×</option>
+          <option value="10">10×</option>
+        </select>
+      </div>
+
+      <div class="scrubber-wrap">
+        <canvas id="alt-chart" width="800" height="48"></canvas>
+        <div class="scrubber-track" id="scrubber-track">
+          <div class="scrubber-buffer" id="scrubber-buffer"></div>
+          <div class="scrubber-played" id="scrubber-played"></div>
+          <div class="scrubber-thumb" id="scrubber-thumb"></div>
+          <input type="range" id="scrubber" min="0" max="1000" value="0" step="1" aria-label="Flight timeline" />
+        </div>
+        <div class="scrubber-hover-time hidden" id="scrubber-hover-time">0:00</div>
+      </div>
+
+      <div class="timeline-meta">
+        <label class="chk"><input type="checkbox" id="show-trail" checked /> Trail</label>
+        <label class="chk"><input type="checkbox" id="show-path" checked /> Full path</label>
+        <label class="chk"><input type="checkbox" id="vertical-exag" checked /> Vertical exaggeration</label>
+        <span id="frame-info" class="frame-info">—</span>
+      </div>
+    </footer>
+
+    <div id="map-attribution" class="attribution hidden">
+      © <a href="https://www.openstreetmap.org/copyright" target="_rel">OpenStreetMap</a> contributors
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
